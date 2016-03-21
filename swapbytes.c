@@ -1,7 +1,7 @@
 /*
  * swapbytes - reorder bytes
  * usage: swapbytes swapspec
- * swapspec copies bytes from stdin to stdout, but also re-arranges them.
+ * swapbytes copies bytes from stdin to stdout, but also re-arranges them.
  * swapspec is like:
  *      rgba2rgb        (for every 4 bytes read, output the first 3)
  *      ab2ba           (swap pairs of bytes)
