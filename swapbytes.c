@@ -13,6 +13,12 @@
  * this code sucks.
  * public domain
  * 2016 jrra
+ * 
+ * 
+ * TO DO:
+ * - filenames as arguments
+ * - performance
+ * - bit mode
  */
 
 #include <stdio.h>      // printf
@@ -114,11 +120,11 @@ int convert_swapspec( struct order *myOrder, char *swapspec ) {
     // calloc for map
     myOrder->map = calloc( myOrder->outLength, sizeof(int) );
     
-    // count the number of times each character is used in the in part
+    // count the number of times each character is used in the inspec
     for( int idx=0; idx < myOrder->inLength; idx++ )
         usedIn[(int) in[idx]] ++;
     
-    // map each byte in the out part to a byte in the in part
+    // map each byte in the outspec to a byte in the inspec
     for( int idx=0; idx < myOrder->outLength; idx++ ) {
         // first, check that this character in the outspec is
         // also used in the inspec
@@ -127,7 +133,7 @@ int convert_swapspec( struct order *myOrder, char *swapspec ) {
         int rep = usedOut[(int) out[idx]]++;
         int nth = (rep) % usedIn[(int) out[idx]];
         
-        // find the nth usage of this out character in the in
+        // find the nth usage of this outspec character in the inspec
         char *new = in-1;
         for( int i=0; i<nth+1; i++ ) {
             new = strchr( new+1, out[idx] );
