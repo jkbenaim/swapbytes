@@ -1,11 +1,17 @@
 /*
  * swapbytes - reorder bytes
- * usage: swapbytes SWAPSPEC
- *      where SWAPSPEC is like:
- *      rgba2rgb
- *      ab2ba
- *      abcd2dcba
- *      RGBAxxxx2RGBA
+ * usage: swapbytes swapspec
+ * swapspec copies bytes from stdin to stdout, but also re-arranges them.
+ * swapspec is like:
+ *      rgba2rgb        (for every 4 bytes read, output the first 3)
+ *      ab2ba           (swap pairs of bytes)
+ *      abcd2dcba       (swap 4 bytes at a time)
+ *      RGBAxxxx2RGBA   (read 8 bytes, write the first 4)
+ *      rrggbb2rgb      (drop every other byte)
+ *      aabb2abab       (swap middle 2 bytes)
+ * 
+ * this code sucks.
+ * public domain
  * 2016 jrra
  */
 
@@ -29,18 +35,18 @@ static const char *convertErrorMessages[] = {
     "your cpu is overheating",
 };
 
-int convert_swapspec( struct order *myOrder, char *swapSpec );
+int convert_swapspec( struct order *myOrder, char *swapspec );
 void order_destroy( struct order *myOrder );
 
 int main( int argc, char *argv[] ) {
     
-    // ensure that SWAPSPEC was given as an argument
+    // ensure that swapspec was given as an argument
     if( argc < 2 ) {
         fprintf( stderr, "%s: missing swapspec\n", argv[0] );
         exit(1);
     }
     
-    // convert SWAPSPEC into an array that maps output bytes to input bytes
+    // convert swapspec into an array that maps output bytes to input bytes
     struct order myOrder;
     int err = convert_swapspec( &myOrder, argv[1] );
     if( err ) {
@@ -61,14 +67,6 @@ int main( int argc, char *argv[] ) {
         exit(3);
     }
     
-    // HACK WARNING TODO debug prints
-    printf( "inLength : %zu\n", myOrder.inLength );
-    printf( "outLength: %zu\n", myOrder.outLength );
-    printf( "map: " );
-    for( int idx=0; idx < myOrder.outLength; idx++ )
-        printf( "%d ", myOrder.map[idx] );
-    printf( "\n" );
-    
     // naively copy from stdin to stdout.
     // fix this to make it fast pls
     uint8_t inbuf[myOrder.inLength];
@@ -86,32 +84,29 @@ int main( int argc, char *argv[] ) {
     return 0;
 }
 
-int convert_swapspec( struct order *myOrder, char *swapSpec ) {
+int convert_swapspec( struct order *myOrder, char *swapspec ) {
     
     // abcd2dcba
     
-    // find the character '2' in the swapSpec
-    char *two = strchr( swapSpec, '2' );
+    // find the character '2' in the swapspec
+    char *two = strchr( swapspec, '2' );
     if( two == NULL )
         return 1;
     
-    // ensure that there is only one '2' in the swapSpec
+    // ensure that there is only one '2' in the swapspec
     char *nextTwo = strchr( two+1, '2' );
     if( nextTwo != NULL )
         return 2;
     
-    char *end = strchr( swapSpec, '\0' );
+    char *end = strchr( swapspec, '\0' );
     
     // calculate inLength
-    myOrder->inLength = (size_t)(two-swapSpec);
+    myOrder->inLength = (size_t)(two-swapspec);
     
     // calculate outLength
     myOrder->outLength = (size_t)(end-two-1);
     
-    // separate the string into two
-//     two[0] = '\0';
-    
-    char *in = swapSpec;
+    char *in = swapspec;
     char *out = two+1;
     int usedIn[256] = {0};
     int usedOut[256] = {0};
@@ -125,12 +120,12 @@ int convert_swapspec( struct order *myOrder, char *swapSpec ) {
     
     // map each byte in the out part to a byte in the in part
     for( int idx=0; idx < myOrder->outLength; idx++ ) {
-        // first, check that this character in the outspec is also used in the inspec
+        // first, check that this character in the outspec is
+        // also used in the inspec
         if( usedIn[(int) out[idx]] == 0 )
             return 4;
         int rep = usedOut[(int) out[idx]]++;
         int nth = (rep) % usedIn[(int) out[idx]];
-//         printf( "rep: %d, u: %d, nth: %d\n", rep, usedIn[(int) out[idx]], nth );
         
         // find the nth usage of this out character in the in
         char *new = in-1;
@@ -141,20 +136,8 @@ int convert_swapspec( struct order *myOrder, char *swapSpec ) {
         }
         
         myOrder->map[idx] = new-in;
-        
-//         for( int idx=0; idx < myOrder->outLength; idx++ )
-//             printf( "%d ", myOrder->map[idx] );
-//         printf( "\n" );
     }
     
-    
-    // HACK TODO WARNING debug prints
-//     for( int idx=0; idx < myOrder->outLength; idx++ )
-//         printf( "%d ", myOrder->map[idx] );
-//     printf( "\n" );
-//     for( int idx=0; idx <= 128; idx++ )
-//         printf( "%u ", usedIn[idx] );
-//     printf("\n");
     return 0;
 }
 

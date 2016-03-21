@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-O3 -ggdb -Wall -Werror
+CFLAGS=-O3 -ggdb -Wall -Werror -std=c99
 
 .PHONY: all clean
 all: swapbytes

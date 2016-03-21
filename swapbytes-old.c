@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>     // for getopt
+#include <getopt.h>     // also for getopt?
 #include <stdlib.h>
 
 enum {
